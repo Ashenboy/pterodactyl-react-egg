@@ -1,0 +1,144 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-06-21T16:56:26+05:30",
+    "name": "React Web App",
+    "author": "ashenetugala@gmail.com",
+    "description": "A React web application egg for Pterodactyl Panel.\r\n\r\nThis egg will clone a React project from a Git repository, install dependencies, build the project, and serve it on a specified port.\r\n\r\nSupports both development and production modes with configurable build options.",
+    "features": null,
+    "docker_images": {
+        "Nodejs 21": "ghcr.io\/parkervcp\/yolks:nodejs_21",
+        "Nodejs 20": "ghcr.io\/parkervcp\/yolks:nodejs_20",
+        "Nodejs 18": "ghcr.io\/parkervcp\/yolks:nodejs_18"
+    },
+    "file_denylist": [],
+    "startup": "if [[ -d .git ]] && [[ {{AUTO_UPDATE}} == \\\"1\\\" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then \/usr\/local\/bin\/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f \/home\/container\/package.json ]; then \/usr\/local\/bin\/npm install; fi; if [[ \\\"${BUILD_MODE}\\\" == \\\"production\\\" ]]; then \/usr\/local\/bin\/npm run build; if [[ \\\"${SERVE_METHOD}\\\" == \\\"serve\\\" ]]; then \/usr\/local\/bin\/npx serve -s build -l ${PORT}; else \/usr\/local\/bin\/npx http-server build -p ${PORT} -a 0.0.0.0; fi; else HOST=0.0.0.0 PORT=${PORT} \/usr\/local\/bin\/npm start; fi",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": [\r\n        \"webpack compiled\",\r\n        \"Local:\",\r\n        \"On Your Network:\",\r\n        \"compiled successfully\",\r\n        \"Serving at http\",\r\n        \"Available on:\"\r\n    ]\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# React App Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napt update\r\napt install -y git curl jq file unzip make gcc g++ python3 python3-dev python3-pip libtool\r\n\r\necho -e \"Updating npm to latest version...\"\r\nnpm install npm@latest --location=global\r\n\r\necho -e \"Installing global packages for React deployment...\"\r\nnpm install -g serve http-server\r\n\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server\r\n\r\nif [ \"${USER_UPLOAD}\" == \"true\" ] || [ \"${USER_UPLOAD}\" == \"1\" ]; then\r\n    echo -e \"User upload mode enabled. Skipping git clone.\"\r\n    exit 0\r\nfi\r\n\r\n## add git ending if it's not on the address\r\nif [[ ${GIT_ADDRESS} != *.git ]]; then\r\n    GIT_ADDRESS=${GIT_ADDRESS}.git\r\nfi\r\n\r\nif [ -z \"${USERNAME}\" ] && [ -z \"${ACCESS_TOKEN}\" ]; then\r\n    echo -e \"Using anonymous git clone\"\r\nelse\r\n    GIT_ADDRESS=\"https:\/\/${USERNAME}:${ACCESS_TOKEN}@$(echo -e ${GIT_ADDRESS} | cut -d\/ -f3-)\"\r\nfi\r\n\r\n## pull git react repo\r\nif [ \"$(ls -A \/mnt\/server)\" ]; then\r\n    echo -e \"\/mnt\/server directory is not empty.\"\r\n    if [ -d .git ]; then\r\n        echo -e \".git directory exists\"\r\n        if [ -f .git\/config ]; then\r\n            echo -e \"Loading info from git config\"\r\n            ORIGIN=$(git config --get remote.origin.url)\r\n        else\r\n            echo -e \"Files found with no git config\"\r\n            echo -e \"Exiting to avoid breaking existing files\"\r\n            exit 10\r\n        fi\r\n    fi\r\n\r\n    if [ \"${ORIGIN}\" == \"${GIT_ADDRESS}\" ]; then\r\n        echo \"Pulling latest changes from repository\"\r\n        git pull\r\n    fi\r\nelse\r\n    echo -e \"\/mnt\/server is empty.\\nCloning React project from repository\"\r\n    if [ -z ${BRANCH} ]; then\r\n        echo -e \"Cloning default branch\"\r\n        git clone ${GIT_ADDRESS} .\r\n    else\r\n        echo -e \"Cloning branch: ${BRANCH}\"\r\n        git clone --single-branch --branch ${BRANCH} ${GIT_ADDRESS} .\r\n    fi\r\nfi\r\n\r\necho \"Installing React project dependencies\"\r\nif [[ ! -z ${NODE_PACKAGES} ]]; then\r\n    \/usr\/local\/bin\/npm install ${NODE_PACKAGES}\r\nfi\r\n\r\nif [ -f \/mnt\/server\/package.json ]; then\r\n    echo \"Installing dependencies from package.json\"\r\n    \/usr\/local\/bin\/npm install\r\nelse\r\n    echo \"No package.json found. Please ensure your React project has a package.json file.\"\r\n    exit 1\r\nfi\r\n\r\necho -e \"React app installation complete!\"\r\nexit 0",
+            "container": "node:18-bookworm-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Git Repository Address",
+            "description": "GitHub\/GitLab repository URL for your React project\\r\\n\\r\\nExample: https:\/\/github.com\/username\/react-app",
+            "env_variable": "GIT_ADDRESS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Branch",
+            "description": "The branch to clone and deploy (leave empty for default branch)",
+            "env_variable": "BRANCH",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Port",
+            "description": "",
+            "env_variable": "PORT",
+            "default_value": "3000",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1024,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Build Mode",
+            "description": "Choose Build Mode:\r\n\r\n- development: Run with `npm start` (hot reload)\r\n- production: Build and serve optimized files",
+            "env_variable": "BUILD_MODE",
+            "default_value": "development",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:development,production",
+            "field_type": "text"
+        },
+        {
+            "name": "Serve Method",
+            "description": "Method to serve production build:\r\n\r\nserve = Use 'serve' package (recommended)\r\nhttp-server = Use 'http-server' package",
+            "env_variable": "SERVE_METHOD",
+            "default_value": "serve",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:serve,http-server",
+            "field_type": "text"
+        },
+        {
+            "name": "User Upload Mode",
+            "description": "Skip git clone if you're uploading files manually:\r\n\r\n0 = Clone from repository (default)\r\n1 = Skip clone, use uploaded files",
+            "env_variable": "USER_UPLOAD",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Automatically pull latest changes on startup:\r\n\r\n0 = Disabled (default)\r\n1 = Enabled",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Additional Node Packages",
+            "description": "Install additional npm packages (space-separated)\r\n\r\nExample: lodash axios moment",
+            "env_variable": "NODE_PACKAGES",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Username",
+            "description": "Username for private repository authentication",
+            "env_variable": "USERNAME",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Git Access Token",
+            "description": "Personal Access Token for private repository authentication\r\n\r\nGitHub: https:\/\/github.com\/settings\/tokens\r\nGitLab: https:\/\/gitlab.com\/-\/profile\/personal_access_tokens",
+            "env_variable": "ACCESS_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Uninstall Node Packages",
+            "description": "Remove npm packages (space-separated)\r\n\r\nExample: old-package unused-lib",
+            "env_variable": "UNNODE_PACKAGES",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        }
+    ]
+}
