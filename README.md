@@ -3,6 +3,7 @@
 A custom [Pterodactyl Panel](https://pterodactyl.io) egg for deploying React web applications with flexible configuration options for ports, build modes, and Git integration.
 
 ---
+![{E68D5765-E6AF-4280-966A-BC9827A366E0}](https://github.com/user-attachments/assets/ced1b1fd-e97f-4b85-90db-3bc862742cbf)
 
 ## 🚀 Features
 
